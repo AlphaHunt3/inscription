@@ -1,0 +1,10 @@
+unisat.db-journal
+__pycache__
+/venv
+.idea
+config.py
+.DS_Store
+/cache
+*.json
+unisat.db
+nohup.out
