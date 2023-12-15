@@ -31,7 +31,7 @@ def get_brc20_info(data_list):
             "tick": ticker
         }
         result = requests.post('https://open-api.unisat.io/v3/market/brc20/auction/brc20_types_specified',headers=headers,json=data).json()['data']
-        data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price])
+        data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price])
 
 
 def get_all_data():
