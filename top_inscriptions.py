@@ -1,10 +1,17 @@
-import requests
+from curl_cffi import requests
 import json
+import time
+import base64
+import hmac
+import hashlib
 
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
 inscriptions = {
     'btc':{
         'brc-20':['ordi','sats']
+    },
+    'solana':{
+        'spl-20': ['sols']
     }
 }
 
@@ -15,6 +22,14 @@ def get_btc_price():
     data = response.json()
     btc_price = data["bitcoin"]["usd"]
     return btc_price
+
+
+def get_solana_price():
+    url = "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
+    response = requests.get(url)
+    data = response.json()
+    solana_price = data["solana"]["usd"]
+    return solana_price
 
 
 def get_brc20_info(data_list):
@@ -34,9 +49,19 @@ def get_brc20_info(data_list):
         data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price])
 
 
+def get_sol_info(data_list):
+    sol_price = get_solana_price()
+    for ticker in inscriptions['solana']['spl-20']:
+        result = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionEscrowStats/{ticker}_spl20?status=all&edge_cache=true&agg=3', impersonate="chrome110").json()['results']
+        supply = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionHolderStats/{ticker}_spl20?edge_cache=true', impersonate="chrome110").json()['results']['totalSupply']
+        price = result['floorPrice']/1e9*sol_price
+        data_list.append([ticker,'solana','spl-20',result['floorPrice']/1e9*sol_price,supply*price,result['deltaFloor24hr']/(result['floorPrice']/1e9),result['volume24hr']/1e9*sol_price])
+
+
 def get_all_data():
     data_list = []
     get_brc20_info(data_list)
+    get_sol_info(data_list)
     with open(f"./cache/inscriptions_data.json", "w") as output:
         json.dump({"data":data_list}, output)
     return data_list
