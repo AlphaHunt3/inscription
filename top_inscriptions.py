@@ -12,6 +12,9 @@ inscriptions = {
     },
     'solana':{
         'spl-20': ['sols']
+    },
+    'polygon':{
+        'prc-20': ['pols']
     }
 }
 
@@ -30,6 +33,14 @@ def get_solana_price():
     data = response.json()
     solana_price = data["solana"]["usd"]
     return solana_price
+
+
+def get_matic_price():
+    url = "https://www.okx.com/api/v5/public/mark-price?instType=SWAP&instId=MATIC-USDT-SWAP"
+    response = requests.get(url)
+    data = response.json()
+    matic_price = data["data"][0]["markPx"]
+    return float(matic_price)
 
 
 def get_brc20_info(data_list):
@@ -58,10 +69,18 @@ def get_sol_info(data_list):
         data_list.append([ticker,'solana','spl-20',result['floorPrice']/1e9*sol_price,supply*price,result['deltaFloor24hr']/(result['floorPrice']/1e9),result['volume24hr']/1e9*sol_price])
 
 
+def get_polygon_info(data_list):
+    matic_price = get_matic_price()
+    for ticker in inscriptions['polygon']['prc-20']:
+        result = requests.get(f'https://www.polsmarket.wtf/api-pols/markets/collections/details?category=token&collectionName=prc-20%20{ticker}', impersonate="chrome110").json()['data']['collections']
+        data_list.append([ticker,'polygon','prc-20',result['floorPrice']*matic_price,result['marketCap'],result['priceChangePercentage24h'],result['volume24h']])
+
+
 def get_all_data():
     data_list = []
     get_brc20_info(data_list)
     get_sol_info(data_list)
+    get_polygon_info(data_list)
     with open(f"./cache/inscriptions_data.json", "w") as output:
         json.dump({"data":data_list}, output)
     return data_list
