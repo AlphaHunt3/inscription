@@ -81,9 +81,12 @@ def get_all_data():
     get_brc20_info(data_list)
     get_sol_info(data_list)
     get_polygon_info(data_list)
+    filter_data = []
+    for i in data_list:
+        filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6]})
     with open(f"./cache/inscriptions_data.json", "w") as output:
-        json.dump({"data":data_list}, output)
-    return data_list
+        json.dump(filter_data, output)
+    return filter_data
 
 
 if __name__ == "__main__":
