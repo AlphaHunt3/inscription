@@ -15,6 +15,9 @@ inscriptions = {
     },
     'polygon':{
         'prc-20': ['pols']
+    },
+    'avax':{
+        'asc-20': ['avav']
     }
 }
 
@@ -41,6 +44,14 @@ def get_matic_price():
     data = response.json()
     matic_price = data["data"][0]["markPx"]
     return float(matic_price)
+
+
+def get_avax_price():
+    url = "https://www.okx.com/api/v5/public/mark-price?instType=SWAP&instId=AVAX-USDT-SWAP"
+    response = requests.get(url)
+    data = response.json()
+    avax_price = data["data"][0]["markPx"]
+    return float(avax_price)
 
 
 def get_brc20_info(data_list):
@@ -76,11 +87,23 @@ def get_polygon_info(data_list):
         data_list.append([ticker,'polygon','prc-20',result['floorPrice']*matic_price,result['marketCap'],result['priceChangePercentage24h'],result['volume24h']])
 
 
+def get_avax_info(data_list):
+    avax_price = get_avax_price()
+    result = requests.post(f'https://avascriptions.com/api/order/market', impersonate="chrome110",json={"page": 1,"pageSize": 15,"keyword": ""}).json()['data']['list']
+    dict = {}
+    for i in result:
+        dict[i['tick']] = i
+    for ticker in inscriptions['avax']['asc-20']:
+        price = float(dict[ticker]['floorPrice'])/1e18*avax_price*dict[ticker]['perMint']
+        data_list.append([ticker,'avax','asc-20',price,float(dict[ticker]['maxSupply'])/1e9*price,0,float(dict[ticker]['volumeDay'])/1e9*price])
+
+
 def get_all_data():
     data_list = []
     get_brc20_info(data_list)
     get_sol_info(data_list)
     get_polygon_info(data_list)
+    get_avax_info(data_list)
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6]})
