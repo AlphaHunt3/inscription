@@ -1,11 +1,8 @@
+from functools import lru_cache
 from curl_cffi import requests
 import json
 from zenrows import ZenRowsClient
 client = ZenRowsClient("da90810786dd26f038fda4a9929a0ee603573eb2")
-import time
-import base64
-import hmac
-import hashlib
 
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
 inscriptions = {
@@ -93,7 +90,8 @@ def get_eth_info(data_list):
     return data_list
 
 
-def get_all_data():
+@lru_cache()
+def get_all_data(_ts):
     data_list = []
     get_brc20_info(data_list)
     get_sol_info(data_list)
@@ -102,7 +100,7 @@ def get_all_data():
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6]})
-    with open(f"./cache/inscriptions_data.json", "w") as output:
+    with open(f"./cache/inscriptions.json", "w") as output:
         json.dump(filter_data, output)
     return filter_data
 
