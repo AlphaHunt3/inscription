@@ -107,8 +107,9 @@ def get_avax_info(data_list):
     for i in result:
         dict[i['tick']] = i
     for ticker in inscriptions['avax']['asc-20']:
-        price = float(dict[ticker]['floorPrice'])/1e18*avax_price*dict[ticker]['perMint']
-        data_list.append([ticker,'avax','asc-20',price,float(dict[ticker]['maxSupply'])/1e9*price,0,float(dict[ticker]['volumeDay'])/1e9*price])
+        mint_price = float(dict[ticker]['floorPrice'])/1e18*avax_price*dict[ticker]['perMint']
+        price = float(dict[ticker]['floorPrice'])/1e18*avax_price
+        data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,0,float(dict[ticker]['volumeDay'])/1e9*price])
 
 
 @lru_cache()
@@ -128,4 +129,4 @@ def get_all_data(_ts):
 
 
 if __name__ == "__main__":
-    print(get_all_data())
+    print(get_all_data(1))
