@@ -35,7 +35,10 @@ websites = {
     'avav': 'https://avascriptions.com/market/token?tick=avav',
     'eths': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20eths',
     'Facet': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20Facet',
-    'gwei': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20gwei'
+    'gwei': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20gwei',
+    'treat': 'https://mainnet.nostrassets.com/#/marketplace/listing',
+    'trick': 'https://mainnet.nostrassets.com/#/marketplace/listing',
+    'nostr': 'https://mainnet.nostrassets.com/#/marketplace/listing'
 }
 
 
@@ -119,6 +122,7 @@ def get_eth_info(data_list):
         data_list.append([ticker,'eth','erc-20',float(token['floorPrice'])*eth_price,token['marketCap'],token['priceChangePercentage24h'],float(token['volume24h'])*float(eth_price), website])
     return data_list
 
+
 def get_avax_info(data_list):
     avax_price = get_avax_price()
     result = requests.post(f'https://avascriptions.com/api/order/market', impersonate="chrome110",json={"page": 1,"pageSize": 15,"keyword": ""}).json()['data']['list']
@@ -131,15 +135,23 @@ def get_avax_info(data_list):
         website = websites.get(ticker, "")
         data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,0,float(dict[ticker]['volumeDay'])/1e9*price, website])
 
-# def get_arc20_info(data_list):
-#     btc_price = get_token_price("BTC")
-#     sat_price = float(btc_price) / 1e8
-#     params = {"js_render": "true", "autoparse":"true","premium_proxy":"true"}
-#     result = client.get('https://server.atomicalmarket.com/market/v1/token-list',params=params)
-#     print(result.text)
-#     for ticker in inscriptions['btc']['arc-20']:
-#         website = websites.get(ticker, "")
-#         data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price, website])
+
+def get_arc20_info(data_list):
+    btc_price = get_token_price("BTC")
+    sat_price = float(btc_price) / 1e8
+    headers = {
+        "Referer": "https://atomicalmarket.com/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Origin": "https://atomicalmarket.com",
+        "Accept": "application/json, text/plain, */*"
+    }
+    result = requests.get('https://server.atomicalmarket.com/market/v1/token-list', headers=headers).json()["data"]
+    data = {}
+    for item in result:
+        data[item['name']] = item
+    for ticker in inscriptions['btc']['arc-20']:
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'btc','brc-20',data[ticker]['FloorPrice']*sat_price,data[ticker]['TotalSupply']*data[ticker]['FloorPrice']*sat_price,data[ticker]['Change'],data[ticker]['Volume24hour']*sat_price, website])
 
 
 def get_nostr_info(data_list):
