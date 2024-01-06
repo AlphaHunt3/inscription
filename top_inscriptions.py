@@ -2,12 +2,14 @@ from functools import lru_cache
 from curl_cffi import requests
 import json
 from zenrows import ZenRowsClient
-client = ZenRowsClient("da90810786dd26f038fda4a9929a0ee603573eb2")
+client = ZenRowsClient("7cb25caa7acba14279756160ab48b1d37be2491e")
 
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
 inscriptions = {
     'btc':{
-        'brc-20':['ordi','sats']
+        'brc-20':['ordi','sats'],
+        'arc-20':['atom','quark'],
+        'lighting':['treat','trick','nostr']
     },
     'solana':{
         'spl-20': ['sols']
@@ -97,7 +99,7 @@ def get_eth_info(data_list):
     result = client.get(f'https://www.etch.market/api/markets/collections?category=token&tokenQuery=&page.size=10&page.index=1', params=params).json()[0]['data']['collections'][:3]
     for token in result:
         ticker = token["collectionName"][7:]
-        data_list.append([ticker,'eth','erc-20',float(token['floorPrice'])*eth_price,token['marketCap'],token['priceChangePercentage24h'],token['volume24h']])
+        data_list.append([ticker,'eth','erc-20',float(token['floorPrice'])*eth_price,token['marketCap'],token['priceChangePercentage24h'],float(token['volume24h'])*float(eth_price)])
     return data_list
 
 def get_avax_info(data_list):
@@ -111,7 +113,26 @@ def get_avax_info(data_list):
         price = float(dict[ticker]['floorPrice'])/1e18*avax_price
         data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,0,float(dict[ticker]['volumeDay'])/1e9*price])
 
+# def get_arc20_info(data_list):
+#     btc_price = get_token_price("BTC")
+#     sat_price = float(btc_price) / 1e8
+#     params = {"js_render": "true", "autoparse":"true","premium_proxy":"true"}
+#     result = client.get('https://server.atomicalmarket.com/market/v1/token-list',params=params)
+#     print(result.text)
+#     for ticker in inscriptions['btc']['arc-20']:
+#         data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price])
 
+def get_nostr_info(data_list):
+    btc_price = get_token_price("BTC")
+    sat_price = float(btc_price) / 1e8
+    result = requests.post('https://market-api.nostrassets.com/market/api/getTokenList').json()['data']
+    dict = {}
+    for i in result:
+        dict[i['name'].lower()] = i
+    for ticker in inscriptions['btc']['lighting']:
+        data_list.append([ticker,'btc','lighting',dict[ticker]['dealPrice']*sat_price,dict[ticker]['totalSupply']*dict[ticker]['dealPrice']*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price])
+
+    
 @lru_cache()
 def get_all_data(_ts):
     data_list = []
@@ -120,6 +141,7 @@ def get_all_data(_ts):
     get_polygon_info(data_list)
     get_avax_info(data_list)
     get_eth_info(data_list)
+    get_nostr_info(data_list)
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6]})
