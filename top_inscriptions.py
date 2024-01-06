@@ -21,8 +21,21 @@ inscriptions = {
         'asc-20': ['avav']
     },
     'eth':{
-        'erc-20': ['eths', 'Facet']
+        'erc-20': ['eths', 'Facet', 'gwei']
     }
+}
+
+websites = {
+    'ordi': 'https://www.coingecko.com/en/coins/ordi',
+    'sats': 'https://www.coingecko.com/en/coins/sats-ordinals',
+    'atom': 'https://atomicalmarket.com/market/token/atom',
+    'quark': 'https://atomicalmarket.com/market/token/atom',
+    'sols': 'https://www.coingecko.com/en/coins/sols',
+    'pols': 'https://www.polsmarket.wtf/',
+    'avav': 'https://avascriptions.com/market/token?tick=avav',
+    'eths': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20eths',
+    'Facet': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20Facet',
+    'gwei': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20gwei'
 }
 
 
@@ -72,7 +85,8 @@ def get_brc20_info(data_list):
             "tick": ticker
         }
         result = requests.post('https://open-api.unisat.io/v3/market/brc20/auction/brc20_types_specified',headers=headers,json=data).json()['data']
-        data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price])
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price, website])
 
 
 def get_sol_info(data_list):
@@ -81,7 +95,8 @@ def get_sol_info(data_list):
         result = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionEscrowStats/{ticker}_spl20?status=all&edge_cache=true&agg=3', impersonate="chrome110").json()['results']
         supply = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionHolderStats/{ticker}_spl20?edge_cache=true', impersonate="chrome110").json()['results']['totalSupply']
         price = result['floorPrice']/1e9*sol_price
-        data_list.append([ticker,'solana','spl-20',result['floorPrice']/1e9*sol_price,supply*price,result['deltaFloor24hr']/(result['floorPrice']/1e9),result['volume24hr']/1e9*sol_price])
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'solana','spl-20',result['floorPrice']/1e9*sol_price,supply*price,result['deltaFloor24hr']/(result['floorPrice']/1e9),result['volume24hr']/1e9*sol_price, website])
 
 
 def get_polygon_info(data_list):
@@ -89,7 +104,8 @@ def get_polygon_info(data_list):
     for ticker in inscriptions['polygon']['prc-20']:
         params = {"js_render": "true", "autoparse":"true"}
         result = client.get(f'https://www.polsmarket.wtf/api-pols/markets/collections/details?category=token&collectionName=prc-20%20{ticker}', params=params).json()[0]['data']['collections']
-        data_list.append([ticker,'polygon','prc-20',float(result['floorPrice'])*matic_price,result['marketCap'],result['priceChangePercentage24h'],result['volume24h']])
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'polygon','prc-20',float(result['floorPrice'])*matic_price,result['marketCap'],result['priceChangePercentage24h'],result['volume24h'], website])
     return data_list
 
 
@@ -99,7 +115,8 @@ def get_eth_info(data_list):
     result = client.get(f'https://www.etch.market/api/markets/collections?category=token&tokenQuery=&page.size=10&page.index=1', params=params).json()[0]['data']['collections'][:3]
     for token in result:
         ticker = token["collectionName"][7:]
-        data_list.append([ticker,'eth','erc-20',float(token['floorPrice'])*eth_price,token['marketCap'],token['priceChangePercentage24h'],float(token['volume24h'])*float(eth_price)])
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'eth','erc-20',float(token['floorPrice'])*eth_price,token['marketCap'],token['priceChangePercentage24h'],float(token['volume24h'])*float(eth_price), website])
     return data_list
 
 def get_avax_info(data_list):
@@ -111,7 +128,8 @@ def get_avax_info(data_list):
     for ticker in inscriptions['avax']['asc-20']:
         mint_price = float(dict[ticker]['floorPrice'])/1e18*avax_price*dict[ticker]['perMint']
         price = float(dict[ticker]['floorPrice'])/1e18*avax_price
-        data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,0,float(dict[ticker]['volumeDay'])/1e9*price])
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,0,float(dict[ticker]['volumeDay'])/1e9*price, website])
 
 # def get_arc20_info(data_list):
 #     btc_price = get_token_price("BTC")
@@ -120,7 +138,9 @@ def get_avax_info(data_list):
 #     result = client.get('https://server.atomicalmarket.com/market/v1/token-list',params=params)
 #     print(result.text)
 #     for ticker in inscriptions['btc']['arc-20']:
-#         data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price])
+#         website = websites.get(ticker, "")
+#         data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price, website])
+
 
 def get_nostr_info(data_list):
     btc_price = get_token_price("BTC")
@@ -130,7 +150,8 @@ def get_nostr_info(data_list):
     for i in result:
         dict[i['name'].lower()] = i
     for ticker in inscriptions['btc']['lighting']:
-        data_list.append([ticker,'btc','lighting',dict[ticker]['dealPrice']*sat_price,dict[ticker]['totalSupply']*dict[ticker]['dealPrice']*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price])
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'btc','lighting',dict[ticker]['dealPrice']*sat_price,dict[ticker]['totalSupply']*dict[ticker]['dealPrice']*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price, website])
 
     
 @lru_cache()
@@ -144,7 +165,7 @@ def get_all_data(_ts):
     get_nostr_info(data_list)
     filter_data = []
     for i in data_list:
-        filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6]})
+        filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6],'website':i[7]})
     with open(f"./cache/inscriptions.json", "w") as output:
         json.dump(filter_data, output)
     return filter_data
