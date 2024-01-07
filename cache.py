@@ -6,7 +6,7 @@ import time
 if __name__ == '__main__':
     while True:
         try:
-            get_all_data(int(int(time.time()) / 7200))
+            get_all_data(int(int(time.time()) / 900))
             print("inscriptions cache refreshed")
             time.sleep(900)
         except Exception as e:
