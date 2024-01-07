@@ -172,7 +172,7 @@ def get_arc20_info(data_list):
         data[item['name']] = item
     for ticker in inscriptions['btc']['arc-20']:
         website = websites.get(ticker, "")
-        data_list.append([ticker,'btc','brc-20',data[ticker]['FloorPrice']*sat_price,data[ticker]['TotalSupply']*data[ticker]['FloorPrice']*sat_price,data[ticker]['Change'],data[ticker]['Volume24hour']*sat_price, website])
+        data_list.append([ticker,'btc','arc-20',data[ticker]['FloorPrice']*sat_price,data[ticker]['TotalSupply']*data[ticker]['FloorPrice']*sat_price,data[ticker]['Change'],data[ticker]['Volume24hour']*sat_price, website])
 
 
 def get_nostr_info(data_list):
@@ -184,7 +184,7 @@ def get_nostr_info(data_list):
         dict[i['name'].lower()] = i
     for ticker in inscriptions['btc']['lighting']:
         website = websites.get(ticker, "")
-        data_list.append([ticker,'btc','lighting',dict[ticker]['dealPrice']*sat_price,dict[ticker]['totalSupply']*dict[ticker]['dealPrice']*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price, website])
+        data_list.append([ticker,'btc','lighting',dict[ticker]['dealPrice']*sat_price/dict[ticker]['decimals'],dict[ticker]['totalSupply']*dict[ticker]['dealPrice']*sat_price/dict[ticker]['decimals'],dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price/dict[ticker]['decimals'], website])
 
 
 def get_mantle_info(data_list):
