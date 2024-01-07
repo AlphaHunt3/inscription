@@ -175,6 +175,7 @@ def get_all_data(_ts):
     get_avax_info(data_list)
     get_eth_info(data_list)
     get_nostr_info(data_list)
+    get_arc20_info(data_list)
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6],'website':i[7]})
