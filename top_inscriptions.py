@@ -185,7 +185,7 @@ def get_nostr_info(data_list):
     for ticker in inscriptions['btc']['lighting']:
         website = websites.get(ticker, "")
         price = float(dict[ticker]['dealPrice'])/float(dict[ticker]['decimals'])
-        data_list.append([ticker,'btc','lighting',price*sat_price,dict[ticker]['totalSupply']*price*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price/float(dict[ticker]['decimals']), website])
+        data_list.append([ticker,'btc','lighting',price*sat_price,dict[ticker]['totalSupply']/float(dict[ticker]['decimals'])*price*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price/float(dict[ticker]['decimals']), website])
 
 
 def get_mantle_info(data_list):
