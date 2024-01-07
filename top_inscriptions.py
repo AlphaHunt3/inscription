@@ -22,6 +22,9 @@ inscriptions = {
     },
     'eth':{
         'erc-20': ['eths', 'Facet', 'gwei']
+    },
+    'mantle': {
+        'mrc-20': ['mans']
     }
 }
 
@@ -38,16 +41,17 @@ websites = {
     'gwei': 'https://www.etch.market/market/token?category=token&collectionName=erc-20%20gwei',
     'treat': 'https://mainnet.nostrassets.com/#/marketplace/listing',
     'trick': 'https://mainnet.nostrassets.com/#/marketplace/listing',
-    'nostr': 'https://mainnet.nostrassets.com/#/marketplace/listing'
+    'nostr': 'https://mainnet.nostrassets.com/#/marketplace/listing',
+    'mans': 'https://manbit.io/market/mans'
 }
 
 
-def get_btc_price():
-    url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+def get_token_price_coingecko(app_id):
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={app_id}&vs_currencies=usd"
     response = requests.get(url)
     data = response.json()
-    btc_price = data["bitcoin"]["usd"]
-    return btc_price
+    token_price = data[app_id]["usd"]
+    return token_price
 
 
 def get_solana_price():
@@ -108,7 +112,7 @@ def get_polygon_info(data_list):
         params = {"js_render": "true", "autoparse":"true"}
         result = client.get(f'https://www.polsmarket.wtf/api-pols/markets/collections/details?category=token&collectionName=prc-20%20{ticker}', params=params).json()[0]['data']['collections']
         website = websites.get(ticker, "")
-        data_list.append([ticker,'polygon','prc-20',float(result['floorPrice'])*matic_price,result['marketCap'],result['priceChangePercentage24h'],result['volume24h'], website])
+        data_list.append([ticker,'polygon','prc-20',float(result['floorPrice'])*matic_price,result['marketCap'],result['priceChangePercentage24h'],float(result['volume24h']) * matic_price, website])
     return data_list
 
 
@@ -133,7 +137,7 @@ def get_avax_info(data_list):
         mint_price = float(dict[ticker]['floorPrice'])/1e18*avax_price*dict[ticker]['perMint']
         price = float(dict[ticker]['floorPrice'])/1e18*avax_price
         website = websites.get(ticker, "")
-        data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,0,float(dict[ticker]['volumeDay'])/1e9*price, website])
+        data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,"N/A",float(dict[ticker]['volumeDay'])/1e9*price, website])
 
 
 def get_arc20_info(data_list):
@@ -165,7 +169,18 @@ def get_nostr_info(data_list):
         website = websites.get(ticker, "")
         data_list.append([ticker,'btc','lighting',dict[ticker]['dealPrice']*sat_price,dict[ticker]['totalSupply']*dict[ticker]['dealPrice']*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price, website])
 
-    
+
+def get_mantle_info(data_list):
+    mnt_price = get_token_price_coingecko("mantle")
+    for ticker in inscriptions['mantle']['mrc-20']:
+        result = requests.get(
+            f'https://api.manbit.xyz/mantles/tick?tick={ticker}',
+            impersonate="chrome110").json()
+        price = result['extend']['floor'] * mnt_price
+        website = websites.get(ticker, "")
+        data_list.append([ticker, 'mantle', 'mrc-20', price, result['tick']['amount'] * price, "N/A", "N/A", website])
+
+
 @lru_cache()
 def get_all_data(_ts):
     data_list = []
@@ -176,6 +191,7 @@ def get_all_data(_ts):
     get_eth_info(data_list)
     get_nostr_info(data_list)
     get_arc20_info(data_list)
+    get_mantle_info(data_list)
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6],'website':i[7]})
