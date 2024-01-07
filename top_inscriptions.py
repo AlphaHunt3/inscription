@@ -5,6 +5,7 @@ from zenrows import ZenRowsClient
 client = ZenRowsClient("7cb25caa7acba14279756160ab48b1d37be2491e")
 
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
+CMCAPIKEY = "f06d7917-bad1-414a-bad7-692ace0af4e4"
 inscriptions = {
     'btc':{
         'brc-20':['ordi','sats'],
@@ -78,22 +79,38 @@ def get_avax_price():
     return float(avax_price)
 
 
-def get_brc20_info(data_list):
-    btc_price = get_token_price("BTC")
-    sat_price = float(btc_price) / 1e8
-    for ticker in inscriptions['btc']['brc-20']:
-        headers = {
-            'Authorization': UnisatAPIKey,
-            'accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-        data = {
-            "timeType": "day1",
-            "tick": ticker
-        }
-        result = requests.post('https://open-api.unisat.io/v3/market/brc20/auction/brc20_types_specified',headers=headers,json=data).json()['data']
+# def get_brc20_info(data_list):
+#     btc_price = get_token_price("BTC")
+#     sat_price = float(btc_price) / 1e8
+#     for ticker in inscriptions['btc']['brc-20']:
+#         headers = {
+#             'Authorization': UnisatAPIKey,
+#             'accept': 'application/json',
+#             'Content-Type': 'application/json'
+#         }
+#         data = {
+#             "timeType": "day1",
+#             "tick": ticker
+#         }
+#         result = requests.post('https://open-api.unisat.io/v3/market/brc20/auction/brc20_types_specified',headers=headers,json=data).json()['data']
+#         website = websites.get(ticker, "")
+#         data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price, website])
+
+
+def get_brc20_info_cmc(data_list):
+
+    headers = {
+        'X-CMC_PRO_API_KEY': CMCAPIKEY,
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+
+    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=25028,28683',headers=headers).json()['data']
+    for token in list(tokens.values()):
+        ticker = token["slug"]
+        metadata = token["quote"]["USD"]
         website = websites.get(ticker, "")
-        data_list.append([ticker,'btc','brc-20',result['curPrice']*sat_price,result['totalMinted']*result['curPrice']*sat_price,result['changePercent'],result['btcVolume']*sat_price, website])
+        data_list.append([ticker,'btc','brc-20',metadata["price"],metadata["market_cap"],metadata["percent_change_24h"],metadata["volume_24h"], website])
 
 
 def get_sol_info(data_list):
@@ -184,7 +201,7 @@ def get_mantle_info(data_list):
 @lru_cache()
 def get_all_data(_ts):
     data_list = []
-    get_brc20_info(data_list)
+    get_brc20_info_cmc(data_list)
     get_sol_info(data_list)
     get_polygon_info(data_list)
     get_avax_info(data_list)
