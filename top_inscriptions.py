@@ -11,7 +11,8 @@ inscriptions = {
         'brc-20':['ordi','sats'],
         'arc-20':['atom','quark'],
         'lighting':['treat','trick','nostr'],
-        'rune': ['cook','psbts']
+        'rune': ['cook','psbts'],
+        'src-20': ['stamp']
     },
     'solana':{
         'spl-20': ['sols']
@@ -46,7 +47,8 @@ websites = {
     'nostr': 'https://mainnet.nostrassets.com/#/marketplace/listing',
     'mans': 'https://manbit.io/market/mans',
     'cook': 'https://runealpha.xyz/market',
-    'psbts': 'https://runealpha.xyz/market'
+    'psbts': 'https://runealpha.xyz/market',
+    'stamp': 'https://openstamp.io/market/src20?tokenId=2&name=STAMP'
 }
 
 
@@ -221,6 +223,21 @@ def get_rune_info(data_list):
         data_list.append([ticker,'btc','rune',price*sat_price,float(dict[ticker]['marketcap'])*sat_price,float(dict[ticker]['change_24h']),float(dict[ticker]['total_volume'])*sat_price, website])
 
 
+def get_stamp_info(data_list):
+    btc_price = get_token_price("BTC")
+    sat_price = float(btc_price) / 1e8
+    headers = {
+        "Referer": "https://openstamp.io/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Origin": "https://openstamp.io/",
+        "Accept": "application/json, text/plain, */*"
+    }
+    for ticker in inscriptions['btc']['src-20']:
+        result = requests.get('https://openstamp.io/api/v1/src20/getMarketToken/2', headers=headers).json()['data']
+        website = websites.get(ticker, "")
+        data_list.append([ticker,'btc','src-20',float(result['price'])*sat_price,float(result['totalSupply'])*float(result['price'])*sat_price,float(result['change24'])*100,float(result['volume24'])*sat_price, website])
+
+
 @lru_cache()
 def get_all_data(_ts):
     data_list = []
@@ -233,6 +250,7 @@ def get_all_data(_ts):
     get_arc20_info(data_list)
     get_mantle_info(data_list)
     get_rune_info(data_list)
+    get_stamp_info(data_list)
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6],'website':i[7]})
