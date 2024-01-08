@@ -28,7 +28,7 @@ def inscriptions_data():
     if inscriptions and len(inscriptions) > 0:
         return inscriptions
     else:
-        return get_all_data(int(int(time.time()) / 900))
+        return get_all_data(int(int(time.time()) / 600))
 
 
 if __name__ == "__main__":

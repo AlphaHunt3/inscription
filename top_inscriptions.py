@@ -12,7 +12,8 @@ inscriptions = {
         'arc-20':['atom','quark'],
         'lighting':['treat','trick','nostr'],
         'rune': ['cook','psbts'],
-        'src-20': ['stamp']
+        'src-20': ['stamp'],
+        'pipe': ['pipe']
     },
     'solana':{
         'spl-20': ['sols']
@@ -28,6 +29,9 @@ inscriptions = {
     },
     'mantle': {
         'mrc-20': ['mans']
+    },
+    'bnb': {
+        'brc-20': ['bnbs']
     }
 }
 
@@ -48,7 +52,9 @@ websites = {
     'mans': 'https://manbit.io/market/mans',
     'cook': 'https://runealpha.xyz/market',
     'psbts': 'https://runealpha.xyz/market',
-    'stamp': 'https://openstamp.io/market/src20?tokenId=2&name=STAMP'
+    'stamp': 'https://openstamp.io/market/src20?tokenId=2&name=STAMP',
+    'pipe': 'https://www.satsx.io/marketplace/pipe/dmt/listed?sort_by=price&q=pipe%3A0&page=1',
+    'bnbs': 'https://evm.ink/marketplace?tab=tokens&protocol=bsc-20&orderBy=Price%3A+Lowest&tick=bnbs&chainId=eip155%3A56'
 }
 
 
@@ -238,6 +244,26 @@ def get_stamp_info(data_list):
         data_list.append([ticker,'btc','src-20',float(result['price'])*sat_price,float(result['totalSupply'])*float(result['price'])*sat_price,float(result['change24'])*100,float(result['volume24'])*sat_price, website])
 
 
+def get_pipe_info(data_list):
+    btc_price = get_token_price("BTC")
+    sat_price = float(btc_price) / 1e8
+    for ticker in inscriptions["btc"]["pipe"]:
+        result = requests.get(f"https://www.satsx.io/marketplace/pipe/dmt/listed?sort_by=price&q={ticker}%3A0&page=1&_data=routes%2Fmarketplace.pipe.%24mtype").json()["data"][0]["attributes"]
+        price = float(result["price"]["min_listed_price"]) * sat_price / 10 ** result["decimals"]
+        website = websites.get(ticker, "")
+        data_list.append([ticker, 'btc', 'pipe', price, 21000000 * price, "N/A", float(result["price"]["total_order_price_by_24h"]) * sat_price / 10 ** result["decimals"], website])
+
+
+def get_bnb_info(data_list):
+    bnb_price = get_token_price("BNB")
+    for ticker in inscriptions["bnb"]["brc-20"]:
+        payload = {"query":"query GetMarketplaceSellListings($limit: Int, $offset: Int, $orderBy: [m_sell_listings_order_by!] = [], $where: m_sell_listings_bool_exp = {}) {\n  m_sell_listings_aggregate(where: $where) {\n    aggregate {\n      count\n    }\n  }\n  m_sell_listings(\n    limit: $limit\n    offset: $offset\n    order_by: $orderBy\n    where: $where\n  ) {\n    block_number\n    category\n    collection_id\n    confirmed\n    content_uri\n    created_at\n    creator_address\n    expire_at\n    extra\n    id\n    internal_trx_index\n    listing_id\n    mtype\n    network_id\n    owner_address\n    position\n    price\n    pt_address\n    pt_image_url\n    pt_name\n    pt_symbol\n    pt_usd_price\n    seller_address\n    trx_hash\n    maybe_fake\n  }\n}","variables":{"limit":24,"offset":0,"orderBy":{"price":"asc"},"where":{"network_id":{"_eq":"eip155:56"},"extra":{"_contains":{"brc20":{"tick":"bnbs","protocol":"bsc-20"}}},"internal_trx_index":{"_eq":0},"position":{},"maybe_fake":{"_eq":"false"}}},"operationName":"GetMarketplaceSellListings"}
+        result = requests.post("https://api.evm.ink/v1/graphql/", impersonate="chrome110", json=payload).json()["data"]
+        price = float(result["m_sell_listings"][0]["price"]) * bnb_price / 1e18
+        website = websites.get(ticker, "")
+        data_list.append([ticker, 'bnb', 'brc-20', price, 21000000 * price, "N/A", "N/A", website])
+    return data_list
+
 @lru_cache()
 def get_all_data(_ts):
     data_list = []
@@ -251,6 +277,8 @@ def get_all_data(_ts):
     get_mantle_info(data_list)
     get_rune_info(data_list)
     get_stamp_info(data_list)
+    get_pipe_info(data_list)
+    get_bnb_info(data_list)
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6],'website':i[7]})
