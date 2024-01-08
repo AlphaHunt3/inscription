@@ -129,7 +129,7 @@ def get_polygon_info(data_list):
         params = {"js_render": "true", "autoparse":"true"}
         result = client.get(f'https://www.polsmarket.wtf/api-pols/markets/collections/details?category=token&collectionName=prc-20%20{ticker}', params=params).json()[0]['data']['collections']
         website = websites.get(ticker, "")
-        data_list.append([ticker,'polygon','prc-20',float(result['floorPrice'])*matic_price,result['marketCap'],result['priceChangePercentage24h'],float(result['volume24h']) * matic_price, website])
+        data_list.append([ticker,'polygon','prc-20',float(result['floorPrice'])*matic_price,result['marketCap'],result['priceChangePercentage24h'] * 100,float(result['volume24h']) * matic_price, website])
     return data_list
 
 
@@ -140,7 +140,7 @@ def get_eth_info(data_list):
     for token in result:
         ticker = token["collectionName"][7:]
         website = websites.get(ticker, "")
-        data_list.append([ticker,'eth','erc-20',float(token['floorPrice'])*eth_price,token['marketCap'],token['priceChangePercentage24h'],float(token['volume24h'])*float(eth_price), website])
+        data_list.append([ticker,'eth','erc-20',float(token['floorPrice'])*eth_price,token['marketCap'],token['priceChangePercentage24h'] * 100,float(token['volume24h'])*float(eth_price), website])
     return data_list
 
 
