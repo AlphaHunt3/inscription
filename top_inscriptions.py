@@ -219,7 +219,7 @@ def get_rune_info(data_list):
         "Origin": "https://runealpha.xyz",
         "Accept": "application/json, text/plain, */*"
     }
-    result = requests.get('https://api.runealpha.xyz/market/runes?limit=10&offset=0&sortBy=volume_24h&sortOrder=DESC', headers=headers).json()['data']
+    result = requests.get('https://api.runealpha.xyz/market/runes?limit=10&offset=0&sortBy=volume_24h&sortOrder=DESC', impersonate="chrome110", headers=headers).json()['data']
     dict = {}
     for i in result['runes']:
         dict[i['rune_name'].lower()] = i
