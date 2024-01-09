@@ -226,7 +226,9 @@ def get_rune_info(data_list):
     for ticker in inscriptions['btc']['rune']:
         website = websites.get(ticker, "")
         price = float(dict[ticker]['floor_price'])
-        data_list.append([ticker,'btc','rune',price*sat_price,float(dict[ticker]['marketcap'])*sat_price,float(dict[ticker]['change_24h']),float(dict[ticker]['total_volume'])*sat_price, website])
+        change = float(dict[ticker]['change_24h'])
+        percentage = change / (price - change)
+        data_list.append([ticker,'btc','rune',price*sat_price,float(dict[ticker]['marketcap'])*sat_price,percentage,float(dict[ticker]['volume_24h'])*sat_price, website])
 
 
 def get_stamp_info(data_list):
