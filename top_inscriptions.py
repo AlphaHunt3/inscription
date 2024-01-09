@@ -227,7 +227,7 @@ def get_rune_info(data_list):
         website = websites.get(ticker, "")
         price = float(dict[ticker]['floor_price'])
         change = float(dict[ticker]['change_24h'])
-        percentage = change / (price - change)
+        percentage = change * 100 / (price - change)
         data_list.append([ticker,'btc','rune',price*sat_price,float(dict[ticker]['marketcap'])*sat_price,percentage,float(dict[ticker]['volume_24h'])*sat_price, website])
 
 
