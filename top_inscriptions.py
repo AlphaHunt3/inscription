@@ -25,7 +25,8 @@ inscriptions = {
         'asc-20': ['avav']
     },
     'eth':{
-        'erc-20': ['eths', 'Facet', 'gwei']
+        'erc-20': ['eths', 'Facet', 'gwei'],
+        'ierc-20': ['ethi']
     },
     'mantle': {
         'mrc-20': ['mans']
@@ -54,7 +55,8 @@ websites = {
     'psbts': 'https://runealpha.xyz/market',
     'stamp': 'https://openstamp.io/market/src20?tokenId=2&name=STAMP',
     'pipe': 'https://www.satsx.io/marketplace/pipe/dmt/listed?sort_by=price&q=pipe%3A0&page=1',
-    'bnbs': 'https://evm.ink/marketplace?tab=tokens&protocol=bsc-20&orderBy=Price%3A+Lowest&tick=bnbs&chainId=eip155%3A56'
+    'bnbs': 'https://evm.ink/marketplace?tab=tokens&protocol=bsc-20&orderBy=Price%3A+Lowest&tick=bnbs&chainId=eip155%3A56',
+    'ethi': 'https://www.ierc20.com/market/ethi'
 }
 
 
@@ -266,6 +268,18 @@ def get_bnb_info(data_list):
         data_list.append([ticker, 'bnb', 'brc-20', price, 21000000 * price, "N/A", "N/A", website])
     return data_list
 
+
+def get_ethi_info(data_list):
+    eth_price = get_token_price("ETH")
+    for ticker in inscriptions["eth"]["ierc-20"]:
+        payload = {"tick":ticker}
+        result = requests.post("https://service.ierc20.com/api/v1/ticks/list", impersonate="chrome110", json=payload).json()["data"]['list'][0]
+        website = websites.get(ticker, "")
+        price = float(result['floor_price'])/1e18*eth_price
+        data_list.append([ticker, 'eth', 'ierc-20', price, 21000000 * price, "N/A", float(result['volume_day'])/1e18*eth_price, website])
+    return data_list
+
+
 @lru_cache()
 def get_all_data(_ts):
     data_list = []
@@ -281,6 +295,7 @@ def get_all_data(_ts):
     get_stamp_info(data_list)
     get_pipe_info(data_list)
     get_bnb_info(data_list)
+    get_ethi_info(data_list)
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6],'website':i[7]})
