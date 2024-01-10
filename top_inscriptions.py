@@ -3,7 +3,7 @@ from curl_cffi import requests
 import json
 from zenrows import ZenRowsClient
 client = ZenRowsClient("7cb25caa7acba14279756160ab48b1d37be2491e")
-
+import time
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
 CMCAPIKEY = "f06d7917-bad1-414a-bad7-692ace0af4e4"
 inscriptions = {
@@ -243,7 +243,7 @@ def get_stamp_info(data_list):
         "Accept": "application/json, text/plain, */*"
     }
     for ticker in inscriptions['btc']['src-20']:
-        result = requests.get('https://openstamp.io/api/v1/src20/getMarketToken/2', headers=headers).json()['data']
+        result = requests.get('https://openstamp.io/api/v1/src20/getMarketToken/2', impersonate="chrome110", headers=headers).json()['data']
         website = websites.get(ticker, "")
         data_list.append([ticker,'btc','src-20',float(result['price'])*sat_price,float(result['totalSupply'])*float(result['price'])*sat_price,float(result['change24'])*100,float(result['volume24'])*sat_price, website])
 
@@ -299,9 +299,13 @@ def get_all_data(_ts):
     filter_data = []
     for i in data_list:
         filter_data.append({'tick':i[0],'blockchain':i[1],'protocol':i[2],'price':i[3],'fdv':i[4],'24h_change':i[5],'24h_volume':i[6],'website':i[7]})
+    result = {
+        "data": filter_data,
+        "updateTime": int(time.time())
+    }
     with open(f"./cache/inscriptions.json", "w") as output:
-        json.dump(filter_data, output)
-    return filter_data
+        json.dump(result, output)
+    return result
 
 
 if __name__ == "__main__":
