@@ -32,7 +32,7 @@ inscriptions = {
         'mrc-20': ['mans']
     },
     'bnb': {
-        'brc-20': ['bnbs']
+        'bsc-20': ['bnbs', 'bsci']
     }
 }
 
@@ -56,6 +56,7 @@ websites = {
     'stamp': 'https://openstamp.io/market/src20?tokenId=2&name=STAMP',
     'pipe': 'https://www.satsx.io/marketplace/pipe/dmt/listed?sort_by=price&q=pipe%3A0&page=1',
     'bnbs': 'https://evm.ink/marketplace?tab=tokens&protocol=bsc-20&orderBy=Price%3A+Lowest&tick=bnbs&chainId=eip155%3A56',
+    'bsci': 'https://evm.ink/marketplace/?tab=tokens&protocol=bsc-20&orderBy=Price%3A+Lowest&tick=bsci&chainId=eip155:56',
     'ethi': 'https://www.ierc20.com/market/ethi'
 }
 
@@ -260,12 +261,13 @@ def get_pipe_info(data_list):
 
 def get_bnb_info(data_list):
     bnb_price = get_token_price("BNB")
-    for ticker in inscriptions["bnb"]["brc-20"]:
-        payload = {"query":"query GetMarketplaceSellListings($limit: Int, $offset: Int, $orderBy: [m_sell_listings_order_by!] = [], $where: m_sell_listings_bool_exp = {}) {\n  m_sell_listings_aggregate(where: $where) {\n    aggregate {\n      count\n    }\n  }\n  m_sell_listings(\n    limit: $limit\n    offset: $offset\n    order_by: $orderBy\n    where: $where\n  ) {\n    block_number\n    category\n    collection_id\n    confirmed\n    content_uri\n    created_at\n    creator_address\n    expire_at\n    extra\n    id\n    internal_trx_index\n    listing_id\n    mtype\n    network_id\n    owner_address\n    position\n    price\n    pt_address\n    pt_image_url\n    pt_name\n    pt_symbol\n    pt_usd_price\n    seller_address\n    trx_hash\n    maybe_fake\n  }\n}","variables":{"limit":24,"offset":0,"orderBy":{"price":"asc"},"where":{"network_id":{"_eq":"eip155:56"},"extra":{"_contains":{"brc20":{"tick":"bnbs","protocol":"bsc-20"}}},"internal_trx_index":{"_eq":0},"position":{},"maybe_fake":{"_eq":"false"}}},"operationName":"GetMarketplaceSellListings"}
+    bsc_supply = {"bnbs": 21000000, "bsci": 21000000000}
+    for ticker in inscriptions["bnb"]["bsc-20"]:
+        payload = {"query":"query GetMarketplaceSellListings($limit: Int, $offset: Int, $orderBy: [m_sell_listings_order_by!] = [], $where: m_sell_listings_bool_exp = {}) {\n  m_sell_listings_aggregate(where: $where) {\n    aggregate {\n      count\n    }\n  }\n  m_sell_listings(\n    limit: $limit\n    offset: $offset\n    order_by: $orderBy\n    where: $where\n  ) {\n    block_number\n    category\n    collection_id\n    confirmed\n    content_uri\n    created_at\n    creator_address\n    expire_at\n    extra\n    id\n    internal_trx_index\n    listing_id\n    mtype\n    network_id\n    owner_address\n    position\n    price\n    pt_address\n    pt_image_url\n    pt_name\n    pt_symbol\n    pt_usd_price\n    seller_address\n    trx_hash\n    maybe_fake\n  }\n}","variables":{"limit":24,"offset":0,"orderBy":{"price":"asc"},"where":{"network_id":{"_eq":"eip155:56"},"extra":{"_contains":{"brc20":{"tick":f"{ticker}","protocol":"bsc-20"}}},"internal_trx_index":{"_eq":0},"position":{},"maybe_fake":{"_eq":"false"}}},"operationName":"GetMarketplaceSellListings"}
         result = requests.post("https://api.evm.ink/v1/graphql/", impersonate="chrome110", json=payload).json()["data"]
         price = float(result["m_sell_listings"][0]["price"]) * bnb_price / 1e18 / 1000
         website = websites.get(ticker, "")
-        data_list.append([ticker, 'bnb', 'brc-20', price, 21000000 * price, "N/A", "N/A", website])
+        data_list.append([ticker, 'bnb', 'bsc-20', price, bsc_supply[ticker] * price, "N/A", "N/A", website])
     return data_list
 
 
