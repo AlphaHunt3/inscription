@@ -6,6 +6,11 @@ client = ZenRowsClient("7cb25caa7acba14279756160ab48b1d37be2491e")
 import time
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
 CMCAPIKEY = "f06d7917-bad1-414a-bad7-692ace0af4e4"
+cmc_headers = {
+        'X-CMC_PRO_API_KEY': CMCAPIKEY,
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
 inscriptions = {
     'btc':{
         'brc-20':['ordi','sats'],
@@ -112,14 +117,7 @@ def get_avax_price():
 
 
 def get_brc20_info_cmc(data_list):
-
-    headers = {
-        'X-CMC_PRO_API_KEY': CMCAPIKEY,
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-    }
-
-    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=25028,28683',headers=headers).json()['data']
+    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=25028,28683',headers=cmc_headers).json()['data']
     for token in list(tokens.values()):
         ticker = token["slug"]
         metadata = token["quote"]["USD"]
@@ -127,14 +125,24 @@ def get_brc20_info_cmc(data_list):
         data_list.append([ticker,'btc','brc-20',metadata["price"],metadata["market_cap"],metadata["percent_change_24h"],metadata["volume_24h"], website])
 
 
-def get_sol_info(data_list):
-    sol_price = get_token_price("SOL")
-    for ticker in inscriptions['solana']['spl-20']:
-        result = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionEscrowStats/{ticker}_spl20?status=all&edge_cache=true&agg=3', impersonate="chrome110").json()['results']
-        supply = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionHolderStats/{ticker}_spl20?edge_cache=true', impersonate="chrome110").json()['results']['totalSupply']
-        price = result['floorPrice']/1e9*sol_price
+def get_sols_info_cmc(data_list):
+    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=28719',headers=cmc_headers).json()['data']
+    for token in list(tokens.values()):
+        ticker = token["slug"]
+        metadata = token["quote"]["USD"]
         website = websites.get(ticker, "")
-        data_list.append([ticker,'solana','spl-20',result['floorPrice']/1e9*sol_price,supply*price,result['deltaFloor24hr']/(result['floorPrice']/1e9),result['volume24hr']/1e9*sol_price, website])
+        data_list.append([ticker,'solana','spl-20',metadata["price"],metadata["market_cap"],metadata["percent_change_24h"],metadata["volume_24h"], website])
+    return data_list
+
+
+# def get_sol_info(data_list):
+#     sol_price = get_token_price("SOL")
+#     for ticker in inscriptions['solana']['spl-20']:
+#         result = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionEscrowStats/{ticker}_spl20?status=all&edge_cache=true&agg=3', impersonate="chrome110").json()['results']
+#         supply = requests.get(f'https://api-mainnet.magiceden.io/rpc/getCollectionHolderStats/{ticker}_spl20?edge_cache=true', impersonate="chrome110").json()['results']['totalSupply']
+#         price = result['floorPrice']/1e9*sol_price
+#         website = websites.get(ticker, "")
+#         data_list.append([ticker,'solana','spl-20',result['floorPrice']/1e9*sol_price,supply*price,result['deltaFloor24hr']/(result['floorPrice']/1e9),result['volume24hr']/1e9*sol_price, website])
 
 
 def get_polygon_info(data_list):
@@ -199,7 +207,8 @@ def get_nostr_info(data_list):
     for ticker in inscriptions['btc']['lighting']:
         website = websites.get(ticker, "")
         price = float(dict[ticker]['dealPrice'])/float(dict[ticker]['decimals'])
-        data_list.append([ticker,'btc','lighting',price*sat_price,dict[ticker]['totalSupply']/float(dict[ticker]['decimals'])*price*sat_price,dict[ticker]['tfChange'],dict[ticker]['tfTotalPrice']*sat_price/float(dict[ticker]['decimals']), website])
+        data_list.append([ticker,'btc','lighting',price*sat_price,dict[ticker]['totalSupply']/float(dict[ticker]['decimals'])*price*sat_price,dict[ticker]['tfChange'] * 100,dict[ticker]['tfTotalPrice']*sat_price/float(dict[ticker]['decimals']), website])
+    return data_list
 
 
 def get_mantle_info(data_list):
@@ -286,7 +295,7 @@ def get_ethi_info(data_list):
 def get_all_data(_ts):
     data_list = []
     get_brc20_info_cmc(data_list)
-    get_sol_info(data_list)
+    get_sols_info_cmc(data_list)
     get_polygon_info(data_list)
     get_avax_info(data_list)
     get_eth_info(data_list)
