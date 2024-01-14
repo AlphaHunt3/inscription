@@ -40,7 +40,7 @@ websites = {
     'ordi': 'https://www.coingecko.com/en/coins/ordi',
     'sats': 'https://www.coingecko.com/en/coins/sats-ordinals',
     'atom': 'https://atomicalmarket.com/market/token/atom',
-    'quark': 'https://atomicalmarket.com/market/token/atom',
+    'quark': 'https://atomicalmarket.com/market/token/quark',
     'sols': 'https://www.coingecko.com/en/coins/sols',
     'pols': 'https://www.polsmarket.wtf/',
     'avav': 'https://avascriptions.com/market/token?tick=avav',
