@@ -2,15 +2,12 @@ from functools import lru_cache
 from curl_cffi import requests
 import json
 from zenrows import ZenRowsClient
+import random
 client = ZenRowsClient("7cb25caa7acba14279756160ab48b1d37be2491e")
 import time
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
-CMCAPIKEY = "f06d7917-bad1-414a-bad7-692ace0af4e4"
-cmc_headers = {
-        'X-CMC_PRO_API_KEY': CMCAPIKEY,
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-    }
+CMCAPIKEYS = ["f06d7917-bad1-414a-bad7-692ace0af4e4", "786057f8-a7a7-49d0-85fc-35c209e5e8b9"]
+
 inscriptions = {
     'btc':{
         'brc-20':['ordi','sats'],
@@ -66,6 +63,13 @@ websites = {
 }
 
 
+def get_cmc_headers():
+    return {
+        'X-CMC_PRO_API_KEY': random.choice(CMCAPIKEYS),
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+
 def get_token_price_coingecko(app_id):
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={app_id}&vs_currencies=usd"
     response = requests.get(url)
@@ -117,7 +121,7 @@ def get_avax_price():
 
 
 def get_brc20_info_cmc(data_list):
-    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=25028,28683',headers=cmc_headers).json()['data']
+    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=25028,28683',headers=get_cmc_headers()).json()['data']
     for token in list(tokens.values()):
         ticker = token["slug"]
         metadata = token["quote"]["USD"]
@@ -126,7 +130,7 @@ def get_brc20_info_cmc(data_list):
 
 
 def get_sols_info_cmc(data_list):
-    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=28719',headers=cmc_headers).json()['data']
+    tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=28719',headers=get_cmc_headers()).json()['data']
     for token in list(tokens.values()):
         ticker = token["slug"]
         metadata = token["quote"]["USD"]
@@ -320,4 +324,4 @@ def get_all_data(_ts):
 
 
 if __name__ == "__main__":
-    print(get_all_data(1))
+    print(get_sols_info_cmc([]))
