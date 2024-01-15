@@ -132,10 +132,10 @@ def get_brc20_info_cmc(data_list):
 def get_sols_info_cmc(data_list):
     tokens = requests.get(f'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=28719',headers=get_cmc_headers()).json()['data']
     for token in list(tokens.values()):
-        ticker = token["slug"]
+        ticker = token["name"].lower()
         metadata = token["quote"]["USD"]
         website = websites.get(ticker, "")
-        data_list.append([ticker,'solana','spl-20',metadata["price"],metadata["market_cap"],metadata["percent_change_24h"],metadata["volume_24h"], website])
+        data_list.append([ticker,'solana','spl-20',metadata["price"],metadata["price"]*token["max_supply"],metadata["percent_change_24h"],metadata["volume_24h"], website])
     return data_list
 
 
