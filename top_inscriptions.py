@@ -172,7 +172,7 @@ def get_eth_info(data_list):
 
 def get_avax_info(data_list):
     avax_price = get_avax_price()
-    result = requests.post(f'https://avascriptions.com/api/order/market', impersonate="chrome110",json={"page": 1,"pageSize": 15,"keyword": ""}).json()['data']['list']
+    result = requests.post(f'https://avascriptions.com/api/order/market', impersonate="chrome110",json={"page": 1,"pageSize": 15,"keyword": "","verified": 1}).json()['data']['list']
     dict = {}
     for i in result:
         dict[i['tick']] = i
@@ -181,6 +181,7 @@ def get_avax_info(data_list):
         price = float(dict[ticker]['floorPrice'])/1e18*avax_price
         website = websites.get(ticker, "")
         data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,"N/A",float(dict[ticker]['volumeDay'])/1e9*price, website])
+    return data_list
 
 
 def get_arc20_info(data_list):
@@ -324,4 +325,4 @@ def get_all_data(_ts):
 
 
 if __name__ == "__main__":
-    print(get_sols_info_cmc([]))
+    print(get_avax_info([]))
