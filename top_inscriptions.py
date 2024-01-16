@@ -5,6 +5,7 @@ from zenrows import ZenRowsClient
 import random
 client = ZenRowsClient("7cb25caa7acba14279756160ab48b1d37be2491e")
 import time
+from bisect import bisect_left
 UnisatAPIKey = "Bearer 2598ee096bfb6ea7af683a8264ff6d07277e3c79db12fc7756f68c6aa8f2caff"
 CMCAPIKEYS = ["f06d7917-bad1-414a-bad7-692ace0af4e4", "786057f8-a7a7-49d0-85fc-35c209e5e8b9"]
 
@@ -171,6 +172,7 @@ def get_eth_info(data_list):
 
 
 def get_avax_info(data_list):
+    price_dict = json.load(open(f"./cache/inscription_price.json"))
     avax_price = get_avax_price()
     result = requests.post(f'https://avascriptions.com/api/order/market', impersonate="chrome110",json={"page": 1,"pageSize": 15,"keyword": "","verified": 1}).json()['data']['list']
     dict = {}
@@ -180,7 +182,16 @@ def get_avax_info(data_list):
         mint_price = float(dict[ticker]['floorPrice'])/1e18*avax_price*dict[ticker]['perMint']
         price = float(dict[ticker]['floorPrice'])/1e18*avax_price
         website = websites.get(ticker, "")
-        data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,"N/A",float(dict[ticker]['volumeDay'])/1e9*price, website])
+        price_change = "N/A"
+        if len(price_dict[ticker])==0 or price_dict[ticker][-1]['time'] <= int(time.time())-3600*4:
+            price_dict[ticker].append({'time':int(time.time()),'price':mint_price})
+        with open(f"./cache/inscription_price.json", "w") as output:
+            json.dump(price_dict, output)
+        timestamps = [entry["time"] for entry in price_dict[ticker]]
+        index = bisect_left(timestamps, int(time.time())-24*3600)
+        if index > 0:
+            price_change = (mint_price-price_dict[ticker][index-1]['price'])/price_dict[ticker][index-1]['price']
+        data_list.append([ticker,'avax','asc-20',mint_price,float(dict[ticker]['maxSupply'])*price,price_change*100,float(dict[ticker]['volumeDay'])/1e9*price, website])
     return data_list
 
 
@@ -215,8 +226,8 @@ def get_nostr_info(data_list):
         data_list.append([ticker,'btc','lighting',price*sat_price,dict[ticker]['totalSupply']/float(dict[ticker]['decimals'])*price*sat_price,dict[ticker]['tfChange'] * 100,dict[ticker]['tfTotalPrice']*sat_price/float(dict[ticker]['decimals']), website])
     return data_list
 
-
 def get_mantle_info(data_list):
+    price_dict = json.load(open(f"./cache/inscription_price.json"))
     mnt_price = get_token_price_coingecko("mantle")
     for ticker in inscriptions['mantle']['mrc-20']:
         result = requests.get(
@@ -224,7 +235,16 @@ def get_mantle_info(data_list):
             impersonate="chrome110").json()
         price = result['extend']['floor'] * mnt_price
         website = websites.get(ticker, "")
-        data_list.append([ticker, 'mantle', 'mrc-20', price, result['tick']['amount'] * price, "N/A", "N/A", website])
+        price_change = "N/A"
+        if len(price_dict[ticker])==0 or price_dict[ticker][-1]['time'] <= int(time.time())-3600*4:
+            price_dict[ticker].append({'time':int(time.time()),'price':price})
+        with open(f"./cache/inscription_price.json", "w") as output:
+            json.dump(price_dict, output)
+        timestamps = [entry["time"] for entry in price_dict[ticker]]
+        index = bisect_left(timestamps, int(time.time())-24*3600)
+        if index > 0:
+            price_change = (price-price_dict[ticker][index-1]['price'])/price_dict[ticker][index-1]['price']
+        data_list.append([ticker, 'mantle', 'mrc-20', price, result['tick']['amount'] * price, price_change*100, "N/A", website])
 
 
 def get_rune_info(data_list):
@@ -262,18 +282,27 @@ def get_stamp_info(data_list):
         website = websites.get(ticker, "")
         data_list.append([ticker,'btc','src-20',float(result['price'])*sat_price,float(result['totalSupply'])*float(result['price'])*sat_price,float(result['change24'])*100,float(result['volume24'])*sat_price, website])
 
-
 def get_pipe_info(data_list):
+    price_dict = json.load(open(f"./cache/inscription_price.json"))
     btc_price = get_token_price("BTC")
     sat_price = float(btc_price) / 1e8
     for ticker in inscriptions["btc"]["pipe"]:
         result = requests.get(f"https://www.satsx.io/marketplace/pipe/dmt/listed?sort_by=price&q={ticker}%3A0&page=1&_data=routes%2Fmarketplace.pipe.%24mtype").json()["data"][0]["attributes"]
         price = float(result["price"]["min_listed_price"]) * sat_price / 10 ** result["decimals"]
         website = websites.get(ticker, "")
-        data_list.append([ticker, 'btc', 'pipe', price, 21000000 * price, "N/A", float(result["price"]["total_order_price_by_24h"]) * sat_price / 10 ** result["decimals"], website])
-
+        price_change = "N/A"
+        if len(price_dict[ticker])==0 or price_dict[ticker][-1]['time'] <= int(time.time())-3600*4:
+            price_dict[ticker].append({'time':int(time.time()),'price':price})
+        with open(f"./cache/inscription_price.json", "w") as output:
+            json.dump(price_dict, output)
+        timestamps = [entry["time"] for entry in price_dict[ticker]]
+        index = bisect_left(timestamps, int(time.time())-24*3600)
+        if index > 0:
+            price_change = (price-price_dict[ticker][index-1]['price'])/price_dict[ticker][index-1]['price']
+        data_list.append([ticker, 'btc', 'pipe', price, 21000000 * price, price_change*100, float(result["price"]["total_order_price_by_24h"]) * sat_price / 10 ** result["decimals"], website])
 
 def get_bnb_info(data_list):
+    price_dict = json.load(open(f"./cache/inscription_price.json"))
     bnb_price = get_token_price("BNB")
     bsc_supply = {"bnbs": 21000000, "bsci": 21000000000}
     for ticker in inscriptions["bnb"]["bsc-20"]:
@@ -281,23 +310,49 @@ def get_bnb_info(data_list):
         result = requests.post("https://api.evm.ink/v1/graphql/", impersonate="chrome110", json=payload).json()["data"]
         price = float(result["m_sell_listings"][0]["price"]) * bnb_price / 1e18 / 1000
         website = websites.get(ticker, "")
-        data_list.append([ticker, 'bnb', 'bsc-20', price, bsc_supply[ticker] * price, "N/A", "N/A", website])
+        price_change = "N/A"
+        if len(price_dict[ticker])==0 or price_dict[ticker][-1]['time'] <= int(time.time())-3600*4:
+            price_dict[ticker].append({'time':int(time.time()),'price':price})
+        with open(f"./cache/inscription_price.json", "w") as output:
+            json.dump(price_dict, output)
+        timestamps = [entry["time"] for entry in price_dict[ticker]]
+        index = bisect_left(timestamps, int(time.time())-24*3600)
+        if index > 0:
+            price_change = (price-price_dict[ticker][index-1]['price'])/price_dict[ticker][index-1]['price']
+        data_list.append([ticker, 'bnb', 'bsc-20', price, bsc_supply[ticker] * price, price_change*100, "N/A", website])
     return data_list
 
-
 def get_ethi_info(data_list):
+    price_dict = json.load(open(f"./cache/inscription_price.json"))
     eth_price = get_token_price("ETH")
     for ticker in inscriptions["eth"]["ierc-20"]:
         payload = {"tick":ticker}
         result = requests.post("https://service.ierc20.com/api/v1/ticks/list", impersonate="chrome110", json=payload).json()["data"]['list'][0]
         website = websites.get(ticker, "")
         price = float(result['floor_price'])/1e18*eth_price
-        data_list.append([ticker, 'eth', 'ierc-20', price, 21000000 * price, "N/A", float(result['volume_day'])/1e18*eth_price, website])
+        price_change = "N/A"
+        if len(price_dict[ticker])==0 or price_dict[ticker][-1]['time'] <= int(time.time())-3600*4:
+            price_dict[ticker].append({'time':int(time.time()),'price':price})
+        with open(f"./cache/inscription_price.json", "w") as output:
+            json.dump(price_dict, output)
+        timestamps = [entry["time"] for entry in price_dict[ticker]]
+        index = bisect_left(timestamps, int(time.time())-24*3600)
+        if index > 0:
+            price_change = (price-price_dict[ticker][index-1]['price'])/price_dict[ticker][index-1]['price']
+        data_list.append([ticker, 'eth', 'ierc-20', price, 21000000 * price, price_change*100, float(result['volume_day'])/1e18*eth_price, website])
     return data_list
 
 
 @lru_cache()
 def get_all_data(_ts):
+    try:
+        price_dict = json.load(open(f"./cache/inscription_price.json"))
+    except:
+        price_dict = {}
+        for i in websites.keys():
+            price_dict[i] = []
+        with open(f"./cache/inscription_price.json", "w") as output:
+            json.dump(price_dict, output)
     data_list = []
     get_brc20_info_cmc(data_list)
     get_sols_info_cmc(data_list)
@@ -325,4 +380,4 @@ def get_all_data(_ts):
 
 
 if __name__ == "__main__":
-    print(get_avax_info([]))
+    get_all_data(1)
