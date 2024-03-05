@@ -210,7 +210,7 @@ def get_arc20_info(data_list):
         data[item['name']] = item
     for ticker in inscriptions['btc']['arc-20']:
         website = websites.get(ticker, "")
-        data_list.append([ticker,'btc','arc-20',data[ticker]['FloorPrice']*sat_price,data[ticker]['TotalSupply']*data[ticker]['FloorPrice']*sat_price,data[ticker]['Change'],data[ticker]['Volume24hour']*sat_price, website])
+        data_list.append([ticker,'btc','arc-20',data[ticker]['floorPrice']*sat_price,data[ticker]['totalSupply']*data[ticker]['floorPrice']*sat_price,data[ticker]['changeRate'],data[ticker]['volume1Day']*sat_price, website])
 
 
 def get_nostr_info(data_list):
